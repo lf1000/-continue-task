@@ -1,0 +1,72 @@
+rules:
+  # ── Rule 1: Block literal external URLs in source code ─────────────────
+  - id: no-external-urls
+    patterns:
+      - pattern-regex: "https?://"
+    paths:
+      include:
+        - "core/**/*.ts"
+        - "extensions/**/*.ts"
+        - "binary/**/*.ts"
+        - "gui/**/*.ts"
+        - "gui/**/*.tsx"
+        - "packages/**/*.ts"
+      exclude:
+        - "**/node_modules/**"
+        - "**/*.test.ts"
+        - "**/*.vitest.ts"
+        - "**/package-lock.json"
+        - "**/package.json"
+        - "**/test-utils/**"
+    message: >
+      External URL found in source code. This air-gapped fork must not
+      contain references to external HTTP(S) URLs. Use internal/local
+      addresses only (127.0.0.1, localhost, 10.x.x.x, etc.).
+    severity: ERROR
+    languages:
+      - generic
+
+  # ── Rule 2: Block known cloud provider domain names ────────────────────
+  - id: no-cloud-provider-domains
+    patterns:
+      - pattern-regex: "(api\\.openai\\.com|api\\.anthropic\\.com|api\\.mistral\\.ai|codestral\\.mistral\\.ai|api\\.cohere\\.ai|api\\.voyageai\\.com|generativelanguage\\.googleapis\\.com|api\\.together\\.xyz|api\\.groq\\.com|api\\.fireworks\\.ai|api\\.deepinfra\\.com|api\\.replicate\\.com|posthog\\.com|sentry\\.io)"
+    paths:
+      include:
+        - "core/**/*.ts"
+        - "extensions/**/*.ts"
+        - "binary/**/*.ts"
+        - "gui/**/*.ts"
+        - "gui/**/*.tsx"
+        - "packages/**/*.ts"
+      exclude:
+        - "**/node_modules/**"
+        - "**/*.test.ts"
+        - "**/*.vitest.ts"
+        - "**/package-lock.json"
+    message: >
+      Cloud provider domain found in source code. This air-gapped fork
+      must not reference external cloud API endpoints.
+    severity: ERROR
+    languages:
+      - generic
+
+  # ── Rule 3: Block PostHog / telemetry imports ──────────────────────────
+  - id: no-telemetry-imports
+    patterns:
+      - pattern-regex: "(posthog|@sentry/node|analytics)"
+    paths:
+      include:
+        - "core/**/*.ts"
+        - "extensions/**/*.ts"
+      exclude:
+        - "**/node_modules/**"
+        - "**/*.test.ts"
+        - "**/*.vitest.ts"
+        - "**/package-lock.json"
+        - "**/package.json"
+    message: >
+      Telemetry/analytics import or reference found. This air-gapped fork
+      must not include any telemetry or crash-reporting code.
+    severity: ERROR
+    languages:
+      - generic
