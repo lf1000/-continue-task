@@ -30,13 +30,15 @@ const MODEL_PROVIDERS_URL =
 const CODESTRAL_URL = "https://console.mistral.ai/codestral";
 const CONTINUE_SETUP_URL = "https://docs.continue.dev/setup/overview";
 
+const defaultProvider: ProviderInfo = providers["ollama"]!;
+
 export function AddModelForm({ onDone }: AddModelFormProps) {
   const [selectedProvider, setSelectedProvider] = useState<ProviderInfo>(
-    providers["openai"]!,
+    defaultProvider,
   );
   const { selectedProfile } = useAuth();
-  const [selectedModel, setSelectedModel] = useState(
-    selectedProvider.packages[0],
+  const [selectedModel, setSelectedModel] = useState<ModelPackage>(
+    defaultProvider.packages[0],
   );
   const formMethods = useForm();
   const ideMessenger = useContext(IdeMessengerContext);
@@ -59,18 +61,17 @@ export function AddModelForm({ onDone }: AddModelFormProps) {
     const apiBase = formMethods.watch("apiBase");
     if (!apiKey) return;
 
-    const providerAtFetchTime = selectedProvider.provider;
     setIsFetchingModels(true);
     try {
       const models = await fetchProviderModels(
         ideMessenger,
-        providerAtFetchTime,
+        selectedProvider.provider,
         apiKey,
         apiBase,
       );
-      setFetchedModelsList((prev) =>
-        selectedProvider.provider === providerAtFetchTime ? models : prev,
-      );
+      if (models) {
+        setFetchedModelsList(models);
+      }
     } catch (error) {
       console.error("Failed to fetch models:", error);
     } finally {
@@ -79,13 +80,12 @@ export function AddModelForm({ onDone }: AddModelFormProps) {
   }, [ideMessenger, selectedProvider, formMethods]);
 
   const popularProviderTitles = [
-    providers["openai"]?.title || "",
-    providers["anthropic"]?.title || "",
-    providers["mistral"]?.title || "",
-    providers["gemini"]?.title || "",
-    providers["azure"]?.title || "",
-    providers["ollama"]?.title || "",
-    providers["openrouter"]?.title || "",
+    providers["ollama"]?.title || "Ollama",
+    providers["lmstudio"]?.title || "LM Studio",
+    providers["vllm"]?.title || "vLLM",
+    providers["llama.cpp"]?.title || "Llama.cpp",
+    providers["llamafile"]?.title || "Llamafile",
+    providers["docker"]?.title || "Docker",
   ];
 
   const allProviders = Object.entries(providers)

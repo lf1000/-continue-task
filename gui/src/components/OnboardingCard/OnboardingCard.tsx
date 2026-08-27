@@ -27,22 +27,22 @@ export function OnboardingCard({ isDialog }: OnboardingCardProps) {
 
   useEffect(() => {
     if (!activeTab) {
-      setActiveTab(OnboardingModes.API_KEY);
+      setActiveTab(OnboardingModes.LOCAL);
     }
   }, [activeTab, setActiveTab]);
 
   function renderTabContent() {
     switch (activeTab) {
-      case OnboardingModes.API_KEY:
-        return <OnboardingProvidersTab />;
       case OnboardingModes.LOCAL:
         return <OnboardingLocalTab />;
-      default:
+      case OnboardingModes.API_KEY:
         return <OnboardingProvidersTab />;
+      default:
+        return <OnboardingLocalTab />;
     }
   }
 
-  const currentTab = activeTab || OnboardingModes.API_KEY;
+  const currentTab = activeTab || OnboardingModes.LOCAL;
 
   return (
     <ReusableCard

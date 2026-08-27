@@ -1,7 +1,7 @@
 import { OnboardingModes } from "core/protocol/core";
 import { FormProvider, useForm } from "react-hook-form";
 import { AddModelForm } from "../../../forms/AddModelForm";
-import { providers } from "../../../pages/AddNewModel/configs/providers";
+import { ProviderInfo, providers } from "../../../pages/AddNewModel/configs/providers";
 import { useAppDispatch } from "../../../redux/hooks";
 import { setDialogMessage, setShowDialog } from "../../../redux/slices/uiSlice";
 import { Button, Input } from "../../index";
@@ -23,10 +23,10 @@ export function OnboardingProvidersTab({
   );
 
   const providerConfigs = [
-    providers["openai"],
-    providers["anthropic"],
-    providers["gemini"],
-  ];
+    providers["ollama"],
+    providers["lmstudio"],
+    providers["vllm"],
+  ].filter(Boolean) as ProviderInfo[];
 
   const handleFormSubmit = () => {
     // Find the first provider with an API key entered
