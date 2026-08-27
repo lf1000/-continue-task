@@ -5,6 +5,7 @@ import { VsCodeExtension } from "../extension/VsCodeExtension";
 import { isUnsupportedPlatform } from "../util/util";
 
 import { GlobalContext } from "core/util/GlobalContext";
+import { registerConnectionActivityPanel } from "../connectionActivityPanel";
 import { VsCodeContinueApi } from "./api";
 import setupInlineTips from "./InlineTipManager";
 
@@ -30,6 +31,7 @@ export async function activateExtension(context: vscode.ExtensionContext) {
 
   // Register commands and providers
   setupInlineTips(context);
+  registerConnectionActivityPanel(context);
 
   const vscodeExtension = new VsCodeExtension(context);
 

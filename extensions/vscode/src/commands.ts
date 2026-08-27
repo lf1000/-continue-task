@@ -354,6 +354,8 @@ const getCommandsMap: (
       consoleView.clearLog();
     },
     "continue.viewLogs": async () => {
+      const { continueOutputChannel } = await import("./extension");
+      continueOutputChannel.show(true);
       vscode.commands.executeCommand("workbench.action.toggleDevTools");
     },
     "continue.debugTerminal": async () => {

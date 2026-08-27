@@ -126,7 +126,7 @@ export class GatedHttpsAgent extends https.Agent {
       process.nextTick(() => socket.destroy(err));
       return socket;
     }
-    return super.createConnection(options, callback as any);
+    return tls.connect(options as any, callback);
   }
 }
 
