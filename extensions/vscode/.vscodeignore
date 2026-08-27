@@ -1,6 +1,11 @@
 .vscode/**
 .vscode-test/**
 build/**
+!build/Release/node_sqlite3.node
+!build/node_sqlite3.node
+!out/build/**
+!out/Release/**
+!out/*.node
 src/**
 .gitignore
 .yarnrc

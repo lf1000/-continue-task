@@ -59,6 +59,37 @@ const esbuildConfig = {
             } catch (e) {
               console.error("Failed to write esbuild meta file", e);
             }
+
+            // Copy native addons (sqlite3) into all runtime binding search paths
+            try {
+              const sqliteSources = [
+                path.join(__dirname, "../node_modules/sqlite3/build/Release/node_sqlite3.node"),
+                path.join(__dirname, "../../../core/node_modules/sqlite3/build/Release/node_sqlite3.node"),
+              ];
+              const sqliteSrc = sqliteSources.find((p) => fs.existsSync(p));
+              if (sqliteSrc) {
+                const targets = [
+                  path.join(__dirname, "../build/Release/node_sqlite3.node"),
+                  path.join(__dirname, "../build/node_sqlite3.node"),
+                  path.join(__dirname, "../out/build/Release/node_sqlite3.node"),
+                  path.join(__dirname, "../out/Release/node_sqlite3.node"),
+                  path.join(__dirname, "../out/node_sqlite3.node"),
+                ];
+                targets.forEach((tgt) => {
+                  const dir = path.dirname(tgt);
+                  if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir, { recursive: true });
+                  }
+                  fs.copyFileSync(sqliteSrc, tgt);
+                });
+                console.log("[info] Copied node_sqlite3.node to build and out targets");
+              } else {
+                console.warn("[warn] Could not locate source node_sqlite3.node");
+              }
+            } catch (copyErr) {
+              console.error("Error copying native addons:", copyErr);
+            }
+
             console.log("VS Code Extension esbuild complete"); // used verbatim in vscode tasks to detect completion
           }
         });
