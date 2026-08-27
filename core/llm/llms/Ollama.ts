@@ -434,6 +434,18 @@ class Ollama extends BaseLLM implements ModelInstaller {
       signal,
     });
 
+    if (response.status !== 200) {
+      const errorText = await response.text();
+      let errorMsg = `Ollama returned HTTP ${response.status} for model "${this._getModel()}": ${errorText}`;
+      try {
+        const errJson = JSON.parse(errorText);
+        if (errJson.error) {
+          errorMsg = `Ollama error: ${errJson.error}. Run \`ollama pull ${this._getModel()}\` to install this model.`;
+        }
+      } catch {}
+      throw new Error(errorMsg);
+    }
+
     let buffer = "";
     for await (const value of streamResponse(response)) {
       // Append the received chunk to the buffer
@@ -534,6 +546,19 @@ class Ollama extends BaseLLM implements ModelInstaller {
       body: JSON.stringify(chatOptions),
       signal,
     });
+
+    if (response.status !== 200) {
+      const errorText = await response.text();
+      let errorMsg = `Ollama returned HTTP ${response.status} for model "${this._getModel()}": ${errorText}`;
+      try {
+        const errJson = JSON.parse(errorText);
+        if (errJson.error) {
+          errorMsg = `Ollama error: ${errJson.error}. Run \`ollama pull ${this._getModel()}\` to install this model.`;
+        }
+      } catch {}
+      throw new Error(errorMsg);
+    }
+
     let isThinking: boolean = false;
 
     function convertChatMessage(res: OllamaChatResponse): ChatMessage[] {
