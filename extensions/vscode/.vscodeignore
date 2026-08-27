@@ -6,6 +6,8 @@ build/**
 !out/build/**
 !out/Release/**
 !out/*.node
+!out/xhr-sync-worker.js
+!out/tree-sitter.wasm
 src/**
 .gitignore
 .yarnrc

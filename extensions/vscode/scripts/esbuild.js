@@ -60,8 +60,9 @@ const esbuildConfig = {
               console.error("Failed to write esbuild meta file", e);
             }
 
-            // Copy native addons (sqlite3) into all runtime binding search paths
+            // Copy native addons and worker files needed at runtime
             try {
+              // 1. sqlite3 native addon
               const sqliteSources = [
                 path.join(__dirname, "../node_modules/sqlite3/build/Release/node_sqlite3.node"),
                 path.join(__dirname, "../../../core/node_modules/sqlite3/build/Release/node_sqlite3.node"),
@@ -86,8 +87,54 @@ const esbuildConfig = {
               } else {
                 console.warn("[warn] Could not locate source node_sqlite3.node");
               }
+
+              // 2. jsdom xhr-sync-worker.js
+              const xhrSources = [
+                path.join(__dirname, "../node_modules/jsdom/lib/jsdom/living/xhr/xhr-sync-worker.js"),
+                path.join(__dirname, "../../../core/node_modules/jsdom/lib/jsdom/living/xhr/xhr-sync-worker.js"),
+              ];
+              const xhrSrc = xhrSources.find((p) => fs.existsSync(p));
+              if (xhrSrc) {
+                const xhrTargets = [
+                  path.join(__dirname, "../out/xhr-sync-worker.js"),
+                  path.join(__dirname, "../build/xhr-sync-worker.js"),
+                  path.join(__dirname, "../xhr-sync-worker.js"),
+                ];
+                xhrTargets.forEach((tgt) => {
+                  const dir = path.dirname(tgt);
+                  if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir, { recursive: true });
+                  }
+                  fs.copyFileSync(xhrSrc, tgt);
+                });
+                console.log("[info] Copied xhr-sync-worker.js to out and build targets");
+              } else {
+                console.warn("[warn] Could not locate source xhr-sync-worker.js");
+              }
+
+              // 3. web-tree-sitter wasm
+              const treeSitterSources = [
+                path.join(__dirname, "../../../core/vendor/tree-sitter.wasm"),
+                path.join(__dirname, "../../../core/node_modules/web-tree-sitter/tree-sitter.wasm"),
+                path.join(__dirname, "../node_modules/web-tree-sitter/tree-sitter.wasm"),
+              ];
+              const treeSitterSrc = treeSitterSources.find((p) => fs.existsSync(p));
+              if (treeSitterSrc) {
+                const tsTargets = [
+                  path.join(__dirname, "../out/tree-sitter.wasm"),
+                  path.join(__dirname, "../build/tree-sitter.wasm"),
+                ];
+                tsTargets.forEach((tgt) => {
+                  const dir = path.dirname(tgt);
+                  if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir, { recursive: true });
+                  }
+                  fs.copyFileSync(treeSitterSrc, tgt);
+                });
+                console.log("[info] Copied tree-sitter.wasm to out and build targets");
+              }
             } catch (copyErr) {
-              console.error("Error copying native addons:", copyErr);
+              console.error("Error copying runtime assets:", copyErr);
             }
 
             console.log("VS Code Extension esbuild complete"); // used verbatim in vscode tasks to detect completion
