@@ -133,6 +133,19 @@ const esbuildConfig = {
                 });
                 console.log("[info] Copied tree-sitter.wasm to out and build targets");
               }
+
+              // 4. GUI webview build assets
+              const guiDist = path.join(__dirname, "../../../gui/dist");
+              const vscodeGui = path.join(__dirname, "../gui");
+              if (fs.existsSync(guiDist)) {
+                if (!fs.existsSync(vscodeGui)) {
+                  fs.mkdirSync(vscodeGui, { recursive: true });
+                }
+                fs.cpSync(guiDist, vscodeGui, { recursive: true });
+                console.log("[info] Copied GUI build from gui/dist to extensions/vscode/gui");
+              } else {
+                console.warn("[warn] gui/dist not found - run npm run build in gui/ first");
+              }
             } catch (copyErr) {
               console.error("Error copying runtime assets:", copyErr);
             }

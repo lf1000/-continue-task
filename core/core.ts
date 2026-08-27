@@ -477,7 +477,7 @@ export class Core {
       const prompt = await MCPManagerSingleton.getInstance().getPrompt(
         serverName,
         promptName,
-        args,
+        args ?? {},
       );
       const stringifiedPrompt = stringifyMcpPrompt(prompt);
       return {

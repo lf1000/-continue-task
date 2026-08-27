@@ -36,16 +36,22 @@ export class MCPConnection {
 
   getStatus(): MCPServerStatus {
     return {
+      ...(this.options as any),
       id: this.options.id,
       name: this.options.name,
       status: "disabled",
       errors: ["[SECURITY] MCP server connections are disabled in this air-gapped build."],
-      tools: [],
-      prompts: [],
-      resources: [],
-      resourceTemplates: [],
-      transport: this.options.transport,
+      infos: [],
+      isProtectedResource: false,
+      tools: this.tools,
+      prompts: this.prompts,
+      resources: this.resources,
+      resourceTemplates: this.resourceTemplates,
     };
+  }
+
+  async getResource(uri: string): Promise<{ contents: any[] }> {
+    return { contents: [] };
   }
 
   async modifyConnection(options: InternalMcpOptions): Promise<void> {

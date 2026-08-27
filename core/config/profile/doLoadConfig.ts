@@ -196,7 +196,7 @@ export default async function doLoadConfig(options: {
   const mcpServerStatuses = mcpManager.getStatuses();
 
   const serializableStatuses = mcpServerStatuses.map((server) => {
-    const { client, ...rest } = server;
+    const { client, ...rest } = server as any;
     return rest;
   });
   newConfig.mcpServerStatuses = serializableStatuses;
