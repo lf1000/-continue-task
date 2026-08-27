@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { IMessenger } from "../../../core/protocol/messenger";
 
 import { handleLLMError } from "./util/errorHandling";
+import { logInfo, logError, logWarn } from "./util/debugLogger";
 
 export class VsCodeWebviewProtocol
   implements IMessenger<FromWebviewProtocol, ToWebviewProtocol>
@@ -50,14 +51,32 @@ export class VsCodeWebviewProtocol
 
     const handleMessage = async (msg: Message): Promise<void> => {
       if (!("messageType" in msg) || !("messageId" in msg)) {
+        debugLogger.error("WebviewProtocol", `Invalid webview msg: ${JSON.stringify(msg)}`);
         throw new Error(`Invalid webview protocol msg: ${JSON.stringify(msg)}`);
       }
 
-      const respond = (message: any) =>
-        this.send(msg.messageType, message, msg.messageId);
+      // Log all incoming messages; truncate data for readability
+      const isChat = msg.messageType === "llm/streamChat" || msg.messageType === "chatDescriber/describe";
+      if (isChat) {
+        logInfo("WebviewProtocol", `>>> CHAT REQUEST received (id=${msg.messageId}): messageType=${msg.messageType}, model=${(msg.data as any)?.completionOptions?.model ?? "<default>"}`);
+      } else {
+        logInfo("WebviewProtocol", `Webview msg: ${msg.messageType} (id=${msg.messageId})`);
+      }
+
+      const respond = (message: any) => {
+        if (isChat) {
+          logInfo("WebviewProtocol", `<<< CHAT RESPONSE chunk (id=${msg.messageId}): done=${message?.done}, status=${message?.status}, hasContent=${!!message?.content}, error=${message?.error ?? "none"}`);
+        }
+        return this.send(msg.messageType, message, msg.messageId);
+      };
 
       const handlers =
         this.listeners.get(msg.messageType as keyof FromWebviewProtocol) || [];
+
+      if (handlers.length === 0) {
+        logWarn("WebviewProtocol", `No handler registered for message type: ${msg.messageType}`);
+      }
+
       for (const handler of handlers) {
         try {
           const response = await handler(msg);
@@ -66,14 +85,22 @@ export class VsCodeWebviewProtocol
             response &&
             typeof response[Symbol.asyncIterator] === "function"
           ) {
+            if (isChat) {
+              logInfo("WebviewProtocol", `CHAT: got async generator response, starting streaming...`);
+            }
+            let chunkCount = 0;
             let next = await response.next();
             while (!next.done) {
+              chunkCount++;
               respond({
                 done: false,
                 content: next.value,
                 status: "success",
               });
               next = await response.next();
+            }
+            if (isChat) {
+              logInfo("WebviewProtocol", `CHAT: stream complete. Sent ${chunkCount} chunks.`);
             }
             respond({
               done: true,
@@ -84,34 +111,26 @@ export class VsCodeWebviewProtocol
             respond({ done: true, content: response, status: "success" });
           }
         } catch (e: any) {
-          if (await handleLLMError(e)) {
-            // Respond without an error, so the UI doesn't show the error component
-            respond({ done: true, status: "error" });
-          }
-          let message = e.message;
-          respond({ done: true, error: message, status: "error" });
-
-          const stringified = JSON.stringify({ msg }, null, 2);
-          console.error(
-            `Error handling webview message: ${stringified}\n\n${e}`,
-          );
-
-          if (
-            stringified.includes("llm/streamChat") ||
-            stringified.includes("chatDescriber/describe")
-          ) {
-            return;
-          }
+          // Build the most useful error message before responding
+          let message: string = e.message ?? "Unknown error";
 
           if (e.cause) {
             if (e.cause.name === "ConnectTimeoutError") {
-              message = `Connection timed out. If you expect it to take a long time to connect, you can increase the timeout in your config by setting "requestOptions": { "timeout": 10000 }. You can find the full config reference here: https://docs.continue.dev/reference/config`;
+              message = `Connection timed out. If you expect it to take a long time to connect, you can increase the timeout in your config.`;
             } else if (e.cause.code === "ECONNREFUSED") {
-              message = `Connection was refused. This likely means that there is no server running at the specified URL. If you are running your own server you may need to set the "apiBase" parameter in config.json. For example, you can set up an OpenAI-compatible server like here: https://docs.continue.dev/reference/Model%20Providers/openai#openai-compatible-servers--apis`;
+              message = `Connection refused — make sure Ollama is running at http://localhost:11434.`;
             } else {
-              message = `The request failed with "${e.cause.name}": ${e.cause.message}. If you're having trouble setting up Continue, please see the troubleshooting guide for help.`;
+              message = `Request failed with "${e.cause.name}": ${e.cause.message}`;
             }
           }
+
+          logError("WebviewProtocol", `Error in handler for ${msg.messageType}: ${message}\nStack: ${e.stack}`);
+          console.error(`[Continue] Error handling webview message ${msg.messageType}: ${message}\n${e.stack}`);
+
+          const wasHandled = await handleLLMError(e);
+          void wasHandled; // fire-and-forget toast notification
+          // Always send exactly ONE done=true response with the error
+          respond({ done: true, error: message, status: "error" });
         }
       }
     };

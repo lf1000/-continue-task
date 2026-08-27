@@ -13,9 +13,21 @@ export async function* llmStreamChat(
   ide: IDE,
   messenger: IMessenger<ToCoreProtocol, FromCoreProtocol>,
 ): AsyncGenerator<ChatMessage, PromptLog> {
+  const log = (s: string) => console.log(`[Continue][StreamChat] ${s}`);
+
+  log(`Loading config... (msgId=${msg.messageId})`);
   const { config } = await configHandler.loadConfig();
   if (!config) {
+    log("ERROR: Config not loaded");
     throw new Error("Config not loaded");
+  }
+
+  const model = config.selectedModelByRole.chat;
+  log(`Chat model: provider=${model?.providerName ?? "none"} model=${model?.model ?? "none"} title=${model?.title ?? "none"} apiBase=${(model as any)?.apiBase ?? "none"}`);
+
+  if (!model) {
+    log("ERROR: No chat model selected");
+    throw new Error("No chat model selected");
   }
 
   // Stop TTS on new StreamChat
@@ -30,11 +42,7 @@ export async function* llmStreamChat(
     messageOptions,
   } = msg.data;
 
-  const model = config.selectedModelByRole.chat;
-
-  if (!model) {
-    throw new Error("No chat model selected");
-  }
+  // model was already selected above and checked for null
 
   // Log to return in case of error
   const errorPromptLog = {
