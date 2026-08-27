@@ -20,10 +20,25 @@ export class MCPManagerSingleton {
     return MCPManagerSingleton.instance;
   }
 
+  setConnections(
+    servers: InternalMcpOptions[],
+    forceDisconnect: boolean = false,
+    extras?: MCPExtras,
+  ): void {
+    this.connections.clear();
+    if (Array.isArray(servers)) {
+      for (const server of servers) {
+        if (server && server.id) {
+          this.connections.set(server.id, new MCPConnection(server, extras));
+        }
+      }
+    }
+  }
+
   async setEnabled(serverId: string, enabled: boolean): Promise<void> {}
 
-  createConnection(id: string, options: InternalMcpOptions): MCPConnection {
-    const connection = new MCPConnection(options);
+  createConnection(id: string, options: InternalMcpOptions, extras?: MCPExtras): MCPConnection {
+    const connection = new MCPConnection(options, extras);
     this.connections.set(id, connection);
     return connection;
   }
@@ -37,7 +52,11 @@ export class MCPManagerSingleton {
   }
 
   getStatuses(): MCPServerStatus[] {
-    return [];
+    const statuses: MCPServerStatus[] = [];
+    for (const conn of this.connections.values()) {
+      statuses.push(conn.getStatus());
+    }
+    return statuses;
   }
 
   async refreshConnection(id: string): Promise<void> {}
