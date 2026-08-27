@@ -6,10 +6,12 @@ import { isUnsupportedPlatform } from "../util/util";
 
 import { GlobalContext } from "core/util/GlobalContext";
 import { registerConnectionActivityPanel } from "../connectionActivityPanel";
+import { logDebug, logInfo } from "../util/debugLogger";
 import { VsCodeContinueApi } from "./api";
 import setupInlineTips from "./InlineTipManager";
 
 export async function activateExtension(context: vscode.ExtensionContext) {
+  logInfo("Activate", "Initializing Continue environment paths and global context...");
   const platformCheck = isUnsupportedPlatform();
   const globalContext = new GlobalContext();
   const hasShownUnsupportedPlatformWarning = globalContext.get(
@@ -30,10 +32,13 @@ export async function activateExtension(context: vscode.ExtensionContext) {
   getContinueRcPath();
 
   // Register commands and providers
+  logInfo("Activate", "Registering inline tips and connection activity panel...");
   setupInlineTips(context);
   registerConnectionActivityPanel(context);
 
+  logInfo("Activate", "Instantiating VsCodeExtension...");
   const vscodeExtension = new VsCodeExtension(context);
+  logInfo("Activate", "VsCodeExtension successfully instantiated.");
 
   // Load Continue configuration
   if (!context.globalState.get("hasBeenInstalled")) {

@@ -53,6 +53,7 @@ import {
 } from "../activation/SelectionChangeManager";
 import { GhostTextAcceptanceTracker } from "../autocomplete/GhostTextAcceptanceTracker";
 import { getDefinitionsFromLsp } from "../autocomplete/lsp";
+import { logDebug, logInfo } from "../util/debugLogger";
 import {
   clearDocumentContentCache,
   handleTextDocumentChange,
@@ -245,6 +246,7 @@ export class VsCodeExtension {
     const configHandlerPromise = new Promise<ConfigHandler>((resolve) => {
       resolveConfigHandler = resolve;
     });
+    logInfo("VsCodeExtension", "Creating GUI Webview provider (windowId: " + this.windowId + ")");
     this.sidebar = new ContinueGUIWebviewViewProvider(
       this.windowId,
       this.extensionContext,
@@ -278,11 +280,17 @@ export class VsCodeExtension {
       this,
     );
 
+    logInfo("VsCodeExtension", "Initializing Continue Core process and ConfigHandler...");
     this.core = new Core(inProcessMessenger, this.ide);
     this.configHandler = this.core.configHandler;
     resolveConfigHandler?.(this.configHandler);
 
-    void this.configHandler.loadConfig();
+    logInfo("VsCodeExtension", "Triggering initial config load from ~/.continue/config.json or config.yaml...");
+    void this.configHandler.loadConfig().then((res) => {
+      logInfo("VsCodeExtension", "Initial config load complete. Errors: " + (res.errors?.length || 0));
+    }).catch((err) => {
+      logInfo("VsCodeExtension", "Initial config load failed: " + (err?.message || err));
+    });
 
     this.verticalDiffManager = new VerticalDiffManager(
       this.sidebar.webviewProtocol,

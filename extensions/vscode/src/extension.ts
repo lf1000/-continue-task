@@ -7,50 +7,40 @@ import "core/util/networkInterceptor";
 
 import { setupCa } from "core/util/ca";
 import * as vscode from "vscode";
+import { continueOutputChannel, getDebugLogFilePath, logError, logInfo, showLogs } from "./util/debugLogger";
 
 export { default as buildTimestamp } from "./.buildTimestamp";
-
-// Global output channel for Continue diagnostic and activation logs
-export const continueOutputChannel = vscode.window.createOutputChannel("Continue");
-
-function log(message: string) {
-  const timestamp = new Date().toISOString();
-  continueOutputChannel.appendLine(`[${timestamp}] [Continue] ${message}`);
-  console.log(`[Continue] ${message}`);
-}
-
-function logError(message: string, error?: any) {
-  const timestamp = new Date().toISOString();
-  const errorDetails = error?.stack || error?.message || String(error || "");
-  continueOutputChannel.appendLine(`[${timestamp}] [Continue ERROR] ${message}\n${errorDetails}`);
-  console.error(`[Continue ERROR] ${message}`, error);
-}
+export { continueOutputChannel } from "./util/debugLogger";
 
 async function dynamicImportAndActivate(context: vscode.ExtensionContext) {
-  log("Starting air-gapped Continue extension activation...");
+  logInfo("Startup", `Starting air-gapped Continue extension activation...`);
+  logInfo("Startup", `Log file location: ${getDebugLogFilePath()}`);
 
   try {
-    log("Step 1/3: Setting up system certificates (CA)...");
+    logInfo("Startup", "Step 1/3: Setting up system certificates (CA)...");
     await setupCa();
-    log("Step 1/3 complete: CA setup finished.");
+    logInfo("Startup", "Step 1/3 complete: CA setup finished.");
   } catch (caErr) {
-    logError("Warning: Non-fatal error during CA setup", caErr);
+    logError("Startup", "Warning: Non-fatal error during CA setup", caErr);
   }
 
-  log("Step 2/3: Dynamically loading activation bundle...");
+  logInfo("Startup", "Step 2/3: Dynamically loading activation bundle...");
   const { activateExtension } = await import("./activation/activate");
-  log("Step 2/3 complete: Module loaded.");
+  logInfo("Startup", "Step 2/3 complete: Activation module loaded.");
 
-  log("Step 3/3: Initializing extension components and services...");
+  logInfo("Startup", "Step 3/3: Initializing extension components, commands, and webviews...");
   const result = await activateExtension(context);
-  log("Step 3/3 complete: Continue extension activated successfully!");
+  logInfo("Startup", "Step 3/3 complete: Continue extension activated successfully!");
 
   return result;
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  // Reveal the output channel on activation so logs are immediately visible
+  showLogs(true);
+
   return dynamicImportAndActivate(context).catch((e: any) => {
-    logError("CRITICAL: Error activating Continue extension", e);
+    logError("Startup", "CRITICAL: Error activating Continue extension", e);
 
     const errorMessage = e?.message || "Unknown error during extension startup.";
 
@@ -58,12 +48,16 @@ export function activate(context: vscode.ExtensionContext) {
       .showErrorMessage(
         `Continue failed to activate: ${errorMessage}`,
         "View Output Logs",
+        "Open Log File",
         "Show Connection Monitor",
         "Retry",
       )
-      .then((selection) => {
+      .then(async (selection) => {
         if (selection === "View Output Logs") {
-          continueOutputChannel.show(true);
+          showLogs(false);
+        } else if (selection === "Open Log File") {
+          const doc = await vscode.workspace.openTextDocument(getDebugLogFilePath());
+          await vscode.window.showTextDocument(doc);
         } else if (selection === "Show Connection Monitor") {
           vscode.commands.executeCommand("continue.showConnectionActivity");
         } else if (selection === "Retry") {
@@ -71,11 +65,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
       });
 
-    // Automatically reveal the output channel on failure so user has instant visibility
-    continueOutputChannel.show(true);
+    showLogs(false);
   });
 }
 
 export function deactivate() {
-  log("Continue extension deactivated.");
+  logInfo("Lifecycle", "Continue extension deactivated.");
 }
