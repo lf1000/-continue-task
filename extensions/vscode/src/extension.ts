@@ -29,13 +29,6 @@ function logError(message: string, error?: any) {
 async function dynamicImportAndActivate(context: vscode.ExtensionContext) {
   log("Starting air-gapped Continue extension activation...");
 
-  // Register emergency log command early so View Logs always works
-  context.subscriptions.push(
-    vscode.commands.registerCommand("continue.viewLogs", () => {
-      continueOutputChannel.show(true);
-    }),
-  );
-
   try {
     log("Step 1/3: Setting up system certificates (CA)...");
     await setupCa();
