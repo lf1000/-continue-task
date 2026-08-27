@@ -287,7 +287,15 @@ export class VsCodeExtension {
 
     logInfo("VsCodeExtension", "Triggering initial config load from ~/.continue/config.json or config.yaml...");
     void this.configHandler.loadConfig().then((res) => {
-      logInfo("VsCodeExtension", "Initial config load complete. Errors: " + (res.errors?.length || 0));
+      const errCount = res.errors?.length || 0;
+      if (errCount > 0) {
+        logInfo("VsCodeExtension", `Initial config load completed with ${errCount} warning/error(s):`);
+        res.errors?.forEach((e, idx) => {
+          logInfo("ConfigError", `[${idx + 1}/${errCount}] ${e.message} (fatal: ${e.fatal})`);
+        });
+      } else {
+        logInfo("VsCodeExtension", "Initial config load complete with 0 errors.");
+      }
     }).catch((err) => {
       logInfo("VsCodeExtension", "Initial config load failed: " + (err?.message || err));
     });
