@@ -1,6 +1,5 @@
 import {
   CubeIcon,
-  ExclamationTriangleIcon,
   PencilIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
@@ -25,7 +24,6 @@ export function BlockSettingsTopToolbar() {
   const dispatch = useAppDispatch();
   const { selectedProfile } = useAuth();
 
-  const configError = useAppSelector((store) => store.config.configError);
   const ideMessenger = useContext(IdeMessengerContext);
 
   const pendingToolCalls = useAppSelector(selectPendingToolCalls);
@@ -34,8 +32,6 @@ export function BlockSettingsTopToolbar() {
   );
   const hasActiveContent =
     pendingToolCalls.length > 0 || callingToolCalls.length > 0;
-
-  const shouldShowError = configError && configError?.length > 0;
 
   const handleRulesClick = () => {
     if (selectedProfile) {
@@ -70,28 +66,6 @@ export function BlockSettingsTopToolbar() {
   return (
     <div className="flex flex-1 items-center justify-between gap-3">
       <div className="flex items-center gap-1">
-        {shouldShowError && (
-          <ToolTip delayShow={700} content="View configuration errors">
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => navigate(CONFIG_ROUTES.CONFIGS)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  navigate(CONFIG_ROUTES.CONFIGS);
-                }
-              }}
-              data-testid="block-settings-toolbar-icon-error"
-              className="relative flex cursor-pointer select-none items-center rounded-full px-1.5 py-1 sm:px-1.5"
-            >
-              <ExclamationTriangleIcon
-                className="text-warning h-[13px] w-[13px] flex-shrink-0"
-                aria-hidden="true"
-              />
-            </div>
-          </ToolTip>
-        )}
 
         {!hasActiveContent && (
           <div className="flex items-center gap-1.5">
