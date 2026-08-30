@@ -51,8 +51,8 @@ export class VsCodeWebviewProtocol
 
     const handleMessage = async (msg: Message): Promise<void> => {
       if (!("messageType" in msg) || !("messageId" in msg)) {
-        debugLogger.error("WebviewProtocol", `Invalid webview msg: ${JSON.stringify(msg)}`);
-        throw new Error(`Invalid webview protocol msg: ${JSON.stringify(msg)}`);
+        logError("WebviewProtocol", `Invalid webview msg: ${JSON.stringify(msg)}`);
+        return; // Silently discard rather than throw — throwing kills the whole listener
       }
 
       // Log all incoming messages; truncate data for readability
