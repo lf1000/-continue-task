@@ -1,4 +1,5 @@
 import { fetchwithRequestOptions } from "@continuedev/fetch";
+import { gateRequest, extractHostname } from "../util/networkInterceptor";
 import { ChatMessage, IDE, PromptLog } from "..";
 import { ConfigHandler } from "../config/ConfigHandler";
 import { FromCoreProtocol, ToCoreProtocol } from "../protocol";
@@ -88,15 +89,17 @@ export async function* llmStreamChat(
         },
         selectedCode,
         config,
-        fetch: (url, init) =>
-          fetchwithRequestOptions(
+        fetch: (url, init) => {
+          gateRequest(extractHostname(url as any), "llm.streamChat");
+          return fetchwithRequestOptions(
             url,
             {
               ...init,
               signal: abortController.signal,
             },
             model.requestOptions,
-          ),
+          );
+        },
         completionOptions,
         abortController,
       });

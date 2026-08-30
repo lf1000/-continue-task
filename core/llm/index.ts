@@ -1,5 +1,6 @@
 import { ModelRole } from "@continuedev/config-yaml";
 import { fetchwithRequestOptions } from "@continuedev/fetch";
+import { gateRequest, extractHostname } from "../util/networkInterceptor.js";
 import { findLlmInfo } from "@continuedev/llm-info";
 import {
   BaseLlmApi,
@@ -450,6 +451,8 @@ export abstract class BaseLLM implements ILLM {
     // Custom Node.js fetch
     const customFetch = async (input: URL | RequestInfo, init: any) => {
       try {
+        const hostname = extractHostname(input as any);
+        gateRequest(hostname, "BaseLLM.fetch");
         const resp = await fetchwithRequestOptions(
           new URL(input as any),
           { ...init },
