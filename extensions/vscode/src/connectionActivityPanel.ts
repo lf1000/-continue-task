@@ -245,6 +245,7 @@ function getWebviewContent(
     tr.blocked td.verdict { color: var(--accent-red); font-weight: 600; }
     tr.allowed td.verdict { color: var(--accent-green); }
     tr.info td.verdict, td.verdict.verdict-info { color: var(--accent-blue); font-weight: 600; }
+    tr.error td.verdict, td.verdict.verdict-error { color: var(--accent-yellow); font-weight: 600; }
 
     .top-hosts {
       margin-top: 16px;
