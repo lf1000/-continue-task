@@ -377,6 +377,7 @@ function getWebviewContent(
     const blockedHosts = {};
 
     function addEvent(event) {
+      if (!event) return;
       events.unshift(event);
       if (events.length > 500) events.pop();
 
@@ -384,60 +385,76 @@ function getWebviewContent(
       if (event.verdict === 'blocked') {
         blocked++;
         blockedTimeline[blockedTimeline.length - 1]++;
-        blockedHosts[event.target] = (blockedHosts[event.target] || 0) + 1;
+        const host = event.target || 'unknown';
+        blockedHosts[host] = (blockedHosts[host] || 0) + 1;
       }
 
       updateDisplay();
     }
 
     function updateDisplay() {
-      document.getElementById('totalCount').textContent = allowed + blocked;
-      document.getElementById('allowedCount').textContent = allowed;
-      document.getElementById('blockedCount').textContent = blocked;
+      // 1. Update metric counters
+      try {
+        document.getElementById('totalCount').textContent = allowed + blocked;
+        document.getElementById('allowedCount').textContent = allowed;
+        document.getElementById('blockedCount').textContent = blocked;
+      } catch (err) {}
 
-      // Update table
-      const tbody = document.getElementById('eventTableBody');
-      const maxRows = 200;
-      const displayEvents = events.slice(0, maxRows);
-      tbody.innerHTML = displayEvents.map(e => {
-        const cls = e.verdict === 'blocked' ? 'blocked' : (e.verdict === 'allowed' ? 'allowed' : 'info');
-        return '<tr class="' + cls + '">' +
-          '<td>' + time + '</td>' +
-          '<td>' + e.eventType + '</td>' +
-          '<td>' + e.target + '</td>' +
-          '<td class="verdict verdict-' + e.verdict + '">' + e.verdict.toUpperCase() + '</td>' +
-          '<td>' + e.sourceModule + '</td>' +
-          '</tr>';
-      }).join('');
-
-      // Update chart via Chart.js
-      var canvas = document.getElementById('trendChart');
-      if (canvas && window.Chart) {
-        if (!window.chartInstance) {
-          window.chartInstance = new window.Chart(canvas, {
-            data: {
-              labels: blockedTimeline.map(function(_, idx) { return idx; }),
-              datasets: [{
-                data: blockedTimeline,
-                borderColor: '#f44747',
-                backgroundColor: 'rgba(244, 71, 71, 0.25)'
-              }]
-            }
-          });
-        } else {
-          window.chartInstance.data.datasets[0].data = blockedTimeline;
-          window.chartInstance.update();
+      // 2. Update Top Attempted External Hosts
+      try {
+        const hostsList = document.getElementById('topHostsList');
+        if (hostsList) {
+          const sorted = Object.entries(blockedHosts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+          hostsList.innerHTML = sorted.map(([host, count]) =>
+            '<div class="host-item"><span>' + host + '</span><span class="host-count">' + count + '</span></div>'
+          ).join('') || '<div style="color:#969696">No blocked hosts yet</div>';
         }
-      }
+      } catch (err) {}
 
-      // Update top hosts
-      const hostsList = document.getElementById('topHostsList');
-      const sorted = Object.entries(blockedHosts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
-      hostsList.innerHTML = sorted.map(([host, count]) =>
-        '<div class="host-item"><span>' + host + '</span><span class="host-count">' + count + '</span></div>'
-      ).join('') || '<div style="color:#969696">No blocked hosts yet</div>';
+      // 3. Update Chart
+      try {
+        const canvas = document.getElementById('trendChart');
+        if (canvas && window.Chart) {
+          if (!window.chartInstance) {
+            window.chartInstance = new window.Chart(canvas, {
+              data: {
+                labels: blockedTimeline.map(function(_, idx) { return idx; }),
+                datasets: [{
+                  data: blockedTimeline,
+                  borderColor: '#f44747',
+                  backgroundColor: 'rgba(244, 71, 71, 0.25)'
+                }]
+              }
+            });
+          } else {
+            window.chartInstance.data.datasets[0].data = blockedTimeline;
+            window.chartInstance.update();
+          }
+        }
+      } catch (err) {}
+
+      // 4. Update Event Table
+      try {
+        const tbody = document.getElementById('eventTableBody');
+        if (tbody) {
+          const maxRows = 200;
+          const displayEvents = events.slice(0, maxRows);
+          tbody.innerHTML = displayEvents.map(e => {
+            const time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+            const cls = e.verdict === 'blocked' ? 'blocked' : (e.verdict === 'allowed' ? 'allowed' : (e.verdict === 'error' ? 'error' : 'info'));
+            const vUpper = (e.verdict || 'INFO').toUpperCase();
+            return '<tr class="' + cls + '">' +
+              '<td>' + time + '</td>' +
+              '<td>' + (e.eventType || '') + '</td>' +
+              '<td>' + (e.target || '') + '</td>' +
+              '<td class="verdict verdict-' + (e.verdict || 'info') + '">' + vUpper + '</td>' +
+              '<td>' + (e.sourceModule || '') + '</td>' +
+              '</tr>';
+          }).join('');
+        }
+      } catch (err) {}
     }
 
     // Advance timeline every 10 seconds
