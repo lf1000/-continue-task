@@ -192,9 +192,11 @@ class SecurityLogger {
     appendToLogFile("combined-activity", event);
 
     // Connection events also go to the 30-day log
+    // Connection and security rejection events also go to the 30-day log
     if (
       eventType === "connection_allowed" ||
-      eventType === "connection_blocked"
+      eventType === "connection_blocked" ||
+      eventType === "config_rejected"
     ) {
       appendToLogFile("connection-activity", event);
     }

@@ -8,6 +8,7 @@
 
 import { URL } from "url";
 import * as net from "net";
+import securityLogger from "../util/securityLogger.js";
 
 // ── Internal network patterns ──────────────────────────────────────────
 // These match RFC 1918, loopback, and link-local ranges.
@@ -139,6 +140,18 @@ export function validateApiBase(apiBase: string, roleName: string): void {
       hostname = apiBase;
     }
 
+    try {
+      securityLogger.log(
+        "config_rejected",
+        hostname || apiBase,
+        "blocked",
+        "configValidation",
+        `Rejected apiBase: ${apiBase} for role: ${roleName}`,
+      );
+    } catch {
+      // Best-effort logging
+    }
+
     throw new Error(
       `[SECURITY] Configuration rejected: apiBase "${apiBase}" for model role "${roleName}" ` +
         `points to non-internal host "${hostname}". ` +
@@ -178,6 +191,18 @@ export function validateProvider(
   }
   const lower = provider.toLowerCase();
   if (!ALLOWED_PROVIDERS.has(lower)) {
+    try {
+      securityLogger.log(
+        "config_rejected",
+        provider,
+        "blocked",
+        "configValidation",
+        `Rejected provider: ${provider} for role: ${roleName}`,
+      );
+    } catch {
+      // Best-effort logging
+    }
+
     throw new Error(
       `[SECURITY] Configuration rejected: provider "${provider}" for model role "${roleName}" ` +
         `is not a permitted local provider. Allowed providers: ${Array.from(ALLOWED_PROVIDERS).join(", ")}. ` +
