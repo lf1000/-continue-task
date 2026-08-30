@@ -152,6 +152,11 @@
     },
     "commands": [
       {
+        "command": "continue.showConnectionActivity",
+        "category": "Continue",
+        "title": "Show Connection Activity"
+      },
+      {
         "command": "continue.applyCodeFromChat",
         "category": "Continue",
         "title": "Apply code from chat",
