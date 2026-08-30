@@ -244,6 +244,7 @@ function getWebviewContent(
     tr.blocked { background: rgba(244, 71, 71, 0.08); }
     tr.blocked td.verdict { color: var(--accent-red); font-weight: 600; }
     tr.allowed td.verdict { color: var(--accent-green); }
+    tr.info td.verdict, td.verdict.verdict-info { color: var(--accent-blue); font-weight: 600; }
 
     .top-hosts {
       margin-top: 16px;
@@ -398,13 +399,12 @@ function getWebviewContent(
       const maxRows = 200;
       const displayEvents = events.slice(0, maxRows);
       tbody.innerHTML = displayEvents.map(e => {
-        const time = new Date(e.timestamp).toLocaleTimeString();
-        const cls = e.verdict === 'blocked' ? 'blocked' : 'allowed';
+        const cls = e.verdict === 'blocked' ? 'blocked' : (e.verdict === 'allowed' ? 'allowed' : 'info');
         return '<tr class="' + cls + '">' +
           '<td>' + time + '</td>' +
           '<td>' + e.eventType + '</td>' +
           '<td>' + e.target + '</td>' +
-          '<td class="verdict">' + e.verdict.toUpperCase() + '</td>' +
+          '<td class="verdict verdict-' + e.verdict + '">' + e.verdict.toUpperCase() + '</td>' +
           '<td>' + e.sourceModule + '</td>' +
           '</tr>';
       }).join('');
