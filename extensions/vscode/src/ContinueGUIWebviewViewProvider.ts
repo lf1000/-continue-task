@@ -4,6 +4,7 @@ import { getTheme } from "./util/getTheme";
 import { getExtensionVersion, getvsCodeUriScheme } from "./util/util";
 import { getExtensionUri, getNonce, getUniqueId } from "./util/vscode";
 import { VsCodeWebviewProtocol } from "./webviewProtocol";
+import { logInfo } from "./util/debugLogger";
 
 import type { FileEdit } from "core";
 
@@ -22,6 +23,7 @@ export class ContinueGUIWebviewViewProvider
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ): void | Thenable<void> {
+    logInfo("GUIWebview", `resolveWebviewView called for viewType=${ContinueGUIWebviewViewProvider.viewType}`);
     this.webviewProtocol.webview = webviewView.webview;
     this._webviewView = webviewView;
     this._webview = webviewView.webview;
@@ -125,6 +127,7 @@ export class ContinueGUIWebviewViewProvider
       }
     });
 
+    logInfo("GUIWebview", "getSidebarContent invoked, setting panel.webview");
     this.webviewProtocol.webview = panel.webview;
 
     return `<!DOCTYPE html>
@@ -133,7 +136,7 @@ export class ContinueGUIWebviewViewProvider
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' 'unsafe-inline'; style-src ${panel.webview.cspSource} 'unsafe-inline'; img-src ${panel.webview.cspSource} data:; font-src ${panel.webview.cspSource}; connect-src ${panel.webview.cspSource};">
-        <script>const vscode = acquireVsCodeApi();</script>
+        <script nonce="${nonce}">const vscode = acquireVsCodeApi();</script>
         <link href="${styleMainUri}" rel="stylesheet">
 
         <title>Continue</title>
@@ -143,7 +146,7 @@ export class ContinueGUIWebviewViewProvider
 
         ${
           inDevelopmentMode
-            ? `<script type="module">
+            ? `<script type="module" nonce="${nonce}">
           import RefreshRuntime from "http://localhost:5173/@react-refresh"
           RefreshRuntime.injectIntoGlobalHook(window)
           window.$RefreshReg$ = () => {}
@@ -155,28 +158,28 @@ export class ContinueGUIWebviewViewProvider
 
         <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 
-        <script>localStorage.setItem("ide", '"vscode"')</script>
-        <script>localStorage.setItem("vsCodeUriScheme", '"${getvsCodeUriScheme()}"')</script>
-        <script>localStorage.setItem("extensionVersion", '"${getExtensionVersion()}"')</script>
-        <script>window.windowId = "${this.windowId}"</script>
-        <script>window.vscMachineId = "${getUniqueId()}"</script>
-        <script>window.vscMediaUrl = "${vscMediaUrl}"</script>
-        <script>window.ide = "vscode"</script>
-        <script>window.fullColorTheme = ${JSON.stringify(currentTheme)}</script>
-        <script>window.colorThemeName = "dark-plus"</script>
-        <script>window.workspacePaths = ${JSON.stringify(
+        <script nonce="${nonce}">localStorage.setItem("ide", '"vscode"')</script>
+        <script nonce="${nonce}">localStorage.setItem("vsCodeUriScheme", '"${getvsCodeUriScheme()}"')</script>
+        <script nonce="${nonce}">localStorage.setItem("extensionVersion", '"${getExtensionVersion()}"')</script>
+        <script nonce="${nonce}">window.windowId = "${this.windowId}"</script>
+        <script nonce="${nonce}">window.vscMachineId = "${getUniqueId()}"</script>
+        <script nonce="${nonce}">window.vscMediaUrl = "${vscMediaUrl}"</script>
+        <script nonce="${nonce}">window.ide = "vscode"</script>
+        <script nonce="${nonce}">window.fullColorTheme = ${JSON.stringify(currentTheme)}</script>
+        <script nonce="${nonce}">window.colorThemeName = "dark-plus"</script>
+        <script nonce="${nonce}">window.workspacePaths = ${JSON.stringify(
           vscode.workspace.workspaceFolders?.map((folder) =>
             folder.uri.toString(),
           ) || [],
         )}</script>
-        <script>window.isFullScreen = ${isFullScreen}</script>
+        <script nonce="${nonce}">window.isFullScreen = ${isFullScreen}</script>
 
         ${
           edits
-            ? `<script>window.edits = ${JSON.stringify(edits)}</script>`
+            ? `<script nonce="${nonce}">window.edits = ${JSON.stringify(edits)}</script>`
             : ""
         }
-        ${page ? `<script>window.location.pathname = "${page}"</script>` : ""}
+        ${page ? `<script nonce="${nonce}">window.location.pathname = "${page}"</script>` : ""}
       </body>
     </html>`;
   }

@@ -46,6 +46,10 @@ export class VsCodeWebviewProtocol
   }
 
   set webview(webView: vscode.Webview) {
+    if (this._webview === webView && this._webviewListener) {
+      return;
+    }
+    logInfo("WebviewProtocol", "Setting new webview instance and attaching onDidReceiveMessage listener");
     this._webview = webView;
     this._webviewListener?.dispose();
 
