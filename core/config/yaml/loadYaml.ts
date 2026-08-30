@@ -38,6 +38,7 @@ import { getAllDotContinueDefinitionFiles } from "../loadLocalAssistants";
 import { unrollLocalYamlBlocks } from "./loadLocalYamlBlocks";
 import { LocalPlatformClient } from "./LocalPlatformClient";
 import { llmsFromModelConfig } from "./models";
+import { validateModelConfig } from "../allowlist";
 import {
   convertYamlMcpConfigToInternalMcpOptions,
   convertYamlRuleToContinueRule,
@@ -282,6 +283,11 @@ export async function configYamlToContinueConfig(options: {
     model.roles = model.roles ?? defaultModelRoles; // Default to all 4 chat-esque roles if not specified
 
     try {
+      validateModelConfig(
+        { provider: model.provider, apiBase: (model as any).apiBase },
+        model.name || model.model || "model",
+      );
+
       const llms = await llmsFromModelConfig({
         model,
         uniqueId,

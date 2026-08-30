@@ -218,11 +218,26 @@ export function validateModelConfig(
   config: { provider?: string; apiBase?: string },
   roleName: string,
 ): void {
-  if (config.provider) {
-    validateProvider(config.provider, roleName);
-  }
+  let firstError: Error | undefined;
+
   if (config.apiBase) {
-    validateApiBase(config.apiBase, roleName);
+    try {
+      validateApiBase(config.apiBase, roleName);
+    } catch (err: any) {
+      firstError = err;
+    }
+  }
+
+  if (config.provider) {
+    try {
+      validateProvider(config.provider, roleName);
+    } catch (err: any) {
+      firstError = firstError || err;
+    }
+  }
+
+  if (firstError) {
+    throw firstError;
   }
 }
 
