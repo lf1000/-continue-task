@@ -642,7 +642,7 @@ class Ollama extends BaseLLM implements ModelInstaller {
     }
 
     if (chatOptions.stream === false) {
-      if (response.status === 499) {
+      if (Number(response.status) === 499) {
         return; // Aborted by user
       }
       const json = (await response.json()) as OllamaChatResponse;

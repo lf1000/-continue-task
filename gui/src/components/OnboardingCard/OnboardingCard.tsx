@@ -1,13 +1,12 @@
 import { OnboardingModes } from "core/protocol/core";
-import { useEffect } from "react";
 import { useAppSelector } from "../../redux/hooks";
 import { getLocalStorage, setLocalStorage } from "../../util/localStorage";
 import { ReusableCard } from "../ReusableCard";
-import { OnboardingCardTabs } from "./components/OnboardingCardTabs";
 import { OnboardingLocalTab } from "./components/OnboardingLocalTab";
-import { OnboardingProvidersTab } from "./components/OnboardingProvidersTab";
 import { useOnboardingCard } from "./hooks/useOnboardingCard";
 
+// Keep activeTab in the state type so existing callsites (utils.ts, HelpSection.tsx, etc.)
+// that set it continue to compile — we simply ignore it and always render the Local tab.
 export interface OnboardingCardState {
   show?: boolean;
   activeTab?: OnboardingModes;
@@ -17,32 +16,17 @@ interface OnboardingCardProps {
   isDialog?: boolean;
 }
 
+/**
+ * Air-gapped onboarding card — only shows the Local (Ollama/LM Studio/vLLM)
+ * setup tab. The "API Key" cloud-provider tab is intentionally removed.
+ */
 export function OnboardingCard({ isDialog }: OnboardingCardProps) {
-  const { activeTab, close, setActiveTab } = useOnboardingCard();
+  const { close } = useOnboardingCard();
   const config = useAppSelector((store) => store.config.config);
 
   if (getLocalStorage("onboardingStatus") === undefined) {
     setLocalStorage("onboardingStatus", "Started");
   }
-
-  useEffect(() => {
-    if (!activeTab) {
-      setActiveTab(OnboardingModes.LOCAL);
-    }
-  }, [activeTab, setActiveTab]);
-
-  function renderTabContent() {
-    switch (activeTab) {
-      case OnboardingModes.LOCAL:
-        return <OnboardingLocalTab />;
-      case OnboardingModes.API_KEY:
-        return <OnboardingProvidersTab />;
-      default:
-        return <OnboardingLocalTab />;
-    }
-  }
-
-  const currentTab = activeTab || OnboardingModes.LOCAL;
 
   return (
     <ReusableCard
@@ -50,8 +34,8 @@ export function OnboardingCard({ isDialog }: OnboardingCardProps) {
       onClose={close}
       testId="onboarding-card"
     >
-      <OnboardingCardTabs activeTab={currentTab} onTabClick={setActiveTab} />
-      {renderTabContent()}
+      {/* No tab bar — only the Local setup is relevant in an air-gapped environment */}
+      <OnboardingLocalTab />
     </ReusableCard>
   );
 }
