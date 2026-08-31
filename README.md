@@ -14,15 +14,33 @@
   <img src="media/github-readme.png" alt="Banner" />
 </p>
 
+## 🔒 Air-Gapped Secure Fork (Installable Plugin)
+
+> **Deliverable:** Download the installable plugin from the [Releases page](https://github.com/lf1000/-continue-task/releases) (`continue-airgapped.vsix`).
+
+### Quick Start & Installation
+
+1. **Download:** Get [`continue-airgapped.vsix`](https://github.com/lf1000/-continue-task/releases/download/v0.1-poc/continue-airgapped.vsix) from the [latest release (v0.1-poc)](https://github.com/lf1000/-continue-task/releases/tag/v0.1-poc).
+2. **Install in VS Code:**
+   - In VS Code, open the Extensions view (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+   - Click the `...` menu in the top-right corner of the Extensions pane
+   - Select **Install from VSIX...** and select `continue-airgapped.vsix`
+   - *Or run via terminal:*
+     ```bash
+     code --install-extension continue-airgapped.vsix
+     ```
+3. **Local LLM Backend:** Ensure a local inference server is running (e.g. Ollama on `http://localhost:11434`, LM Studio on `http://localhost:1234`, or vLLM on `http://localhost:8000`).
+4. **Connection Monitor:** Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run `Continue: Show Connection Activity` to view the live network audit dashboard.
+
+### Security Documentation & Hardening Overview
+
+- **[PR-Style Diff Summary](PR_DIFF_SUMMARY.md)**: Comprehensive breakdown of all 5 defense layers (Runtime Interceptor, Config Validation, Source Sanitization, Security Logging, Semgrep CI) with direct file links and commit references.
+- **[Security Test Report](TEST_REPORT.md)**: Formal verification report covering network egress prevention, configuration anti-tampering, and local LLM performance.
+- **[Deployment Network Config](docs/DEPLOYMENT-NETWORK-CONFIG.md)**: OS firewall rules (iptables, nftables, Windows Firewall) and VS Code sandbox policies.
+
+---
+
 ## What is Continue?
-
-> _Note: The `continuedev/continue` repository is no longer actively maintained and is read-only for all users._
-
-Continue is a coding agent available as a [CLI](#cli), [VS Code extension](#vs-code), and [JetBrains plugin](#jetbrains).
-
-## Documentation
-
-To learn how to configure Continue, how it works, and how to customize it, check out the [Continue Docs](https://docs.continue.dev).
 
 ## Final 2.0.0 Release
 
